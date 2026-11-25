@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // The One-Liner Groan-Off — writes one original one-line dad joke to entry.txt.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ENTRY_LINE =
@@ -16,13 +16,23 @@ function main(): void {
   if (ENTRY_LINE.trim().length === 0) {
     throw new Error("entry line must not be only whitespace");
   }
+  if (ENTRY_LINE !== ENTRY_LINE.trim()) {
+    throw new Error(
+      "entry line must not have leading or trailing whitespace",
+    );
+  }
   if (ENTRY_LINE.includes("\n") || ENTRY_LINE.includes("\r")) {
     throw new Error("entry line must be a single line");
   }
 
   const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
   mkdirSync(outDir, { recursive: true });
-  writeFileSync(join(outDir, "entry.txt"), ENTRY_LINE, "utf8");
+  const outPath = join(outDir, "entry.txt");
+  writeFileSync(outPath, ENTRY_LINE, "utf8");
+  // Write-back verification: the file on disk must be exactly the entry line.
+  if (readFileSync(outPath, "utf8") !== ENTRY_LINE) {
+    throw new Error("entry.txt does not match the entry line");
+  }
 }
 
 main();
